@@ -1,14 +1,31 @@
 #PD=$(readlink -f  $(dirname $0) )
 #!/bin/bash 
 
+if [ $# -lt 1  ]
+then
+        echo "Usage : $0 PROD/DEV  "
+        exit
+fi
+
+INPUT=${1:-DEV}
 PD=`readlink -f $(dirname $0 )  `
 echo $PD
 LOG=${PD}/log/logfile_`date +%Y%m%d`
-SRCPTH=/Android_Reldata/official_product_releases
-DSTPTH=/android_relbkp/official_product_releases
-#SRCPTH=/Android_Reldata/official_product_releases/Miscellaneous
-#DSTPTH=/android_relbkp/official_product_releases/Miscellaneous
 
+case "$1" in
+      PROD) echo "PROD Copying"
+	SRCPTH=/Android_Reldata/official_product_releases/Miscellaneous
+	DSTPTH=/android_relbkp/official_product_releases/Miscellaneous
+	NOOFRELEASES=200
+	INFILE="PRODinput"
+	;;
+   *) echo "Default DEV  "
+	SRCPTH=/Android_Reldata/official_product_releases
+	DSTPTH=/android_relbkp/official_product_releases
+	NOOFRELEASES=10
+	INFILE="DEVinput"
+	;;
+esac
 MOV=false
 #*************
 echo "====================================================================================================================================" >> ${LOG}
@@ -17,12 +34,12 @@ echo "==========================================================================
 
 funct() { 
 sum=0 ; cnt=0
-for l in `cat ${PD}/input10daysdata`
+for l in `cat ${PD}/${INFILE}`
 do
    CNT=` $(which find) $SRCPTH/$l -maxdepth 1  -mindepth  1  -type d   |  grep -E "QM|QV|[^R]" | wc -l  | tr -s " " "~" | cut -d "~" -f 1 `   
-   if [ $CNT -gt 15   ] ; then
-      DIFF=`expr $CNT - 15 `   
-      ls -tr1 $SRCPTH/$l  | grep -E "QM|QV|[^R]" |  head -${DIFF}  > ${PD}/folderstomov.txt 
+   if [ $CNT -gt $NOOFRELEASES        ] ; then
+      DIFF=`expr $CNT - $NOOFRELEASES    `   
+      ls -tr1 $SRCPTH/$l  | grep -E "QM|QV|[^R]|TPM" |  head -${DIFF}  > ${PD}/folderstomov.txt 
       for m in ` cat ${PD}/folderstomov.txt `
       do
 	  if [ -d $DSTPTH/$l/$m ] ; then 
@@ -34,7 +51,7 @@ do
 	     	echo "Moving $SRCPTH/$l/$m  To $DSTPTH/$l/$m  => ${size}MB"  >> ${LOG}
 
 	         $(which mv)  $SRCPTH/$l/$m  $DSTPTH/$l/       
-		if [ $? != 0 ]  ; then  echo "!!!   Failed to moved folder $SRCPTH/$l/$m " >> ${LOG} ; fi 
+		if [ $? != 0 ]  ; then  echo "!!!   Failed to move folder $SRCPTH/$l/$m " >> ${LOG} ; fi 
 	     fi	
           fi           	 
       done 
