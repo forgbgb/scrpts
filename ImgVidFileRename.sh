@@ -1,16 +1,16 @@
 clear
 
 ############# For VID/IMG-<dt>-WA*.ext type of files  and  IMG_<dt>_<time>.ext 
-Folder=Photos_Videos/Photos_Jan13
+Folder=Photos_Videos/photo_udupi_n_old_Jan13
 newfolder=SortedPhotos_Videos
-$(which find) $Folder  -name *.jpg  > $Folder/a.txt 
-
-for l in `$(which cat) ${Folder}/a.txt`
+$(which find) $Folder -name \*.*  | egrep -v "THM|Thumb"   > $newfolder/a.txt 
+  
+for l in `$(which cat) ${newfolder}/a.txt`
 do
     name="${l##*/}" 
     ext=`echo $name | $(which cut) -d "."  -f 2 ` 
     pth=${l%/*} 
-    echo "$l --- $pth --- $name $ext " 
+#    echo "$l --- $pth --- $name $ext " 
 
 
    epoccrtime=`$(which stat) -c %X $l`
@@ -19,7 +19,7 @@ do
 #   echo "Modifytime : "`$(which stat) -c %Y $l `" :: "`/usr/bin/stat -c %y $l`
    let diff=$epocmdtime-$epoccrtime
    if [ $epocmdtime -gt $epoccrtime  ] ; then
-      echo "Create time is older "
+#      echo "Create time is older "
 #      echo "Modifytime : "`$(which stat) -c %x $l`
       DT=`$(which stat) -c %x $l`
    else
